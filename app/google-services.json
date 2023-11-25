@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "210147259434",
+    "firebase_url": "https://game-puzzle-pursuit-a6c54-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "game-puzzle-pursuit-a6c54",
+    "storage_bucket": "game-puzzle-pursuit-a6c54.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:210147259434:android:d128c25475c8f77e15bf53",
+        "android_client_info": {
+          "package_name": "com.example.game_puzzle_pursuit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "210147259434-qaqh4in860v8ooqsqaman1133u70r9ji.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.game_puzzle_pursuit",
+            "certificate_hash": "ea64577bcebe2d3a52e7709abac807f1bdb937f5"
+          }
+        },
+        {
+          "client_id": "210147259434-vhd455jfos1n9avt3sbsqiiq197hoa7a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-idM_u9Cr2Iukekd30EfXOvPJbi23wM0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [{
+            "client_id": "210147259434-vhd455jfos1n9avt3sbsqiiq197hoa7a.apps.googleusercontent.com",
+            "client_type": 3
+          }]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
