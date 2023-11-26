@@ -24,6 +24,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioButton;
@@ -66,7 +67,7 @@ import java.util.Random;
 
 public class MainActivity extends AppCompatActivity  implements OnMapReadyCallback {
     private GoogleMap gMap;
-    private Button btnLogout;
+    private ImageButton btnLogout;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private Marker marker;
     private DatabaseReference databaseReference;

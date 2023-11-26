@@ -11,54 +11,18 @@
         android:layout_height="match_parent"
         android:id="@+id/map"
         tools:context=".MapsActivity"
-        android:layout_above="@+id/bottom_sheet"
         android:name="com.google.android.gms.maps.SupportMapFragment" />
-    <FrameLayout
-        android:id="@+id/bottom_sheet"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:background="@android:color/white"
-        android:elevation="8dp"
-        android:visibility="gone"
-        tools:ignore="MissingConstraints">
 
-        <!-- Thêm các thành phần cho hiển thị câu hỏi và đáp án -->
-        <TextView
-            android:id="@+id/questionTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Question" />
 
-        <TextView
-            android:id="@+id/answer1TextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Answer 1" />
-
-        <TextView
-            android:id="@+id/answer2TextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Answer 2" />
-
-        <TextView
-            android:id="@+id/answer3TextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Answer 3" />
-
-    </FrameLayout>
-
-    <Button
+    <ImageButton
         android:id="@+id/btnquiz"
-        android:layout_width="113dp"
-        android:layout_height="50dp"
-        android:background="@drawable/btn_bg"
-        android:text="câu đố"
-        tools:layout_editor_absoluteX="38dp"
-        tools:layout_editor_absoluteY="43dp"
+        android:layout_width="61dp"
+        android:layout_height="69dp"
+        android:background="@null"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/logout"
         tools:ignore="MissingConstraints" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
