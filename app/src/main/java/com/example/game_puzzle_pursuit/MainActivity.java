@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -49,6 +51,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -57,17 +60,21 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 
 public class MainActivity extends AppCompatActivity  implements OnMapReadyCallback {
+    TextView userNameTextView, totalScoreTextView;
     private GoogleMap gMap;
-    private ImageButton btnLogout;
+    private ImageButton btnLogout, btnTable;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private Marker marker;
     private DatabaseReference databaseReference;
@@ -80,6 +87,9 @@ public class MainActivity extends AppCompatActivity  implements OnMapReadyCallba
         setContentView(R.layout.activity_main);
 
         btnLogout = findViewById(R.id.btnquiz);
+        btnTable = findViewById(R.id.btnTable);
+        userNameTextView = findViewById(R.id.userNameTextView);
+        totalScoreTextView = findViewById(R.id.totalScoreTextView);
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         auth = FirebaseAuth.getInstance();
@@ -92,23 +102,18 @@ public class MainActivity extends AppCompatActivity  implements OnMapReadyCallba
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         databaseReference = database.getReference("questions");
 
+        loadUserData();
+        btnTable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTableDiaLog();
+            }
+        });
+
         btnLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
-
-                GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().build();
-                GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(getBaseContext(),googleSignInOptions);
-                googleSignInClient.signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        Intent intent = new Intent(getBaseContext(),LoginActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        finish();
-                    }
-                });
-                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                handleLogout();
             }
         });
     }
@@ -234,33 +239,40 @@ public class MainActivity extends AppCompatActivity  implements OnMapReadyCallba
                             RadioButton selectedRadioButton = dialogView.findViewById(selectedId);
                             String selectedAnswer = selectedRadioButton.getText().toString();
                             // Xử lý kết quả
-                            checkAnswer(selectedAnswer, answers);
+                            for (Answer answer : answers) {
+                                if (answer.getContent().equals(selectedAnswer)) {
+                                    boolean isCorrect = answer.isCorrect();
+                                    if (isCorrect){
+                                        FirebaseUser currentUser = auth.getCurrentUser();
 
-                            FirebaseUser currentUser = auth.getCurrentUser();
+                                        if (currentUser != null) {
+                                            String userId = currentUser.getUid();
+                                            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("User").child(userId);
 
-                            if (currentUser != null) {
-                                String userId = currentUser.getUid();
-                                DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("User").child(userId);
+                                            // Lấy thông tin người dùng hiện tại từ Realtime Database
+                                            userRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<DataSnapshot> task) {
+                                                    if (task.isSuccessful()) {
+                                                        DataSnapshot userData = task.getResult();
+                                                        if (userData.exists()) {
+                                                            // Lấy điểm số hiện tại của người dùng
+                                                            int currentScore = userData.child("totalScore").getValue(int.class);
 
-                                // Lấy thông tin người dùng hiện tại từ Realtime Database
-                                userRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<DataSnapshot> task) {
-                                        if (task.isSuccessful()) {
-                                            DataSnapshot userData = task.getResult();
-                                            if (userData.exists()) {
-                                                // Lấy điểm số hiện tại của người dùng
-                                                int currentScore = userData.child("totalScore").getValue(int.class);
+                                                            // Cộng thêm 10 vào điểm số hiện tại
+                                                            int newScore = currentScore + 10;
 
-                                                // Cộng thêm 10 vào điểm số hiện tại
-                                                int newScore = currentScore + 10;
-
-                                                // Cập nhật điểm số mới vào Realtime Database
-                                                userRef.child("totalScore").setValue(newScore);
-                                            }
+                                                            // Cập nhật điểm số mới vào Realtime Database
+                                                            userRef.child("totalScore").setValue(newScore);
+                                                        }
+                                                    }
+                                                }
+                                            });
                                         }
                                     }
-                                });
+                                    String resultMessage = isCorrect ? "Đúng, +10 Point!" : "Sai rồi bạn ơi!";
+                                    Toast.makeText(MainActivity.this, resultMessage, Toast.LENGTH_SHORT).show();
+                                }
                             }
                         } else {
                             Toast.makeText(MainActivity.this, "Please select an answer", Toast.LENGTH_SHORT).show();
@@ -341,6 +353,113 @@ public class MainActivity extends AppCompatActivity  implements OnMapReadyCallba
 
         // Chuyển đổi Bitmap thành BitmapDescriptor
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    private void showTableDiaLog() {
+        databaseReference = FirebaseDatabase.getInstance().getReference("User");
+
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Account> accountList = new ArrayList<>();
+                List<Account> accountList1 = new ArrayList<>();
+
+                for (DataSnapshot item : snapshot.getChildren()) {
+                    Account account = new Account();
+                    account.setUserName(item.child("userName").getValue(String.class));
+                    account.setTotalScore(item.child("totalScore").getValue(Integer.class));
+                    accountList.add(account);
+                }
+
+                Collections.sort(accountList, new Comparator<Account>() {
+                    @Override
+                    public int compare(Account account1, Account account2) {
+                        // So sánh theo totalScore giảm dần
+                        return Integer.compare(account2.getTotalScore(), account1.getTotalScore());
+                    }
+                });
+
+                showAlertDialog("Bảng xếp hạng", accountList);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Xử lý khi có lỗi xảy ra
+            }
+        });
+    }
+
+    private void showAlertDialog(String title, List<Account> accountList) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_leaderboard, null);
+
+        // Tạo RecyclerView và thiết lập LayoutManager
+        RecyclerView recyclerView = dialogView.findViewById(R.id.rvUser);
+        recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+
+        // Tạo Adapter và thiết lập dữ liệu
+        AccountAdapter adapter = new AccountAdapter(accountList);
+        recyclerView.setAdapter(adapter);
+
+        // Đặt RecyclerView vào AlertDialog
+        builder.setView(dialogView);
+
+        Button btnClose = dialogView.findViewById(R.id.btnClose);
+
+        AlertDialog dialog = builder.create();
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+    }
+
+    private void loadUserData() {
+        FirebaseUser currentUser = auth.getCurrentUser();
+
+        if (currentUser != null) {
+            String userId = currentUser.getUid();
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("User").child(userId);
+
+            // Lấy thông tin người dùng hiện tại từ Realtime Database
+            userRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DataSnapshot> task) {
+                    if (task.isSuccessful()) {
+                        DataSnapshot userData = task.getResult();
+                        if (userData.exists()) {
+                            // Lấy điểm số hiện tại của người dùng
+                            String userName = userData.child("userName").getValue(String.class);
+                            int currentScore = userData.child("totalScore").getValue(int.class);
+
+                            userNameTextView.setText("Username: " + userName);
+                            totalScoreTextView.setText("Total Score: " + currentScore);
+
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private void handleLogout(){
+        FirebaseAuth.getInstance().signOut();
+
+        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().build();
+        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(getBaseContext(),googleSignInOptions);
+        googleSignInClient.signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Intent intent = new Intent(getBaseContext(),LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            }
+        });
+        startActivity(new Intent(MainActivity.this, LoginActivity.class));
     }
 
     @Override
