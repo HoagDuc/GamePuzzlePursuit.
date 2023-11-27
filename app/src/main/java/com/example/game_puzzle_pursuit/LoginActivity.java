@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.hardware.Sensor;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -35,7 +36,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText inputEmail, inputPassword;
     private TextView textViewSignUp;
-    private Button btnLogin, btnGoogle, btnFacebook;
+    private Button btnLogin, btnGoogle, btnFacebook, btnThi;
     private GoogleSignInClient client;
     private DatabaseReference database;
     private FirebaseAuth auth;
@@ -84,6 +85,15 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent i = client.getSignInIntent();
                 startActivityForResult(i, 1);
+            }
+        });
+
+        btnThi = findViewById(R.id.btnThi);
+
+        btnThi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getApplicationContext(), sensor.class));
             }
         });
     }
